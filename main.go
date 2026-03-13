@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"strings"
@@ -86,7 +87,7 @@ func buildSlackPayload(data []byte) string {
 		":fitton-niyari:",
 		":fitton-gahaha:",
 	}
-	randomIcon := icons[int(data[0])%len(icons)]
+	randomIcon := icons[rand.IntN(len(icons))]
 
 	var parsed struct {
 		AccountID string `json:"account_id"`
