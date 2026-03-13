@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -56,7 +55,7 @@ func main() {
 		}
 
 		text := formatMessage(data)
-		slackPayload := fmt.Sprintf(`{"text":%s}`, jsonString(text))
+		slackPayload := buildSlackPayload(text)
 
 		resp, err := http.Post(slackWebhookURL, "application/json", strings.NewReader(slackPayload))
 		if err != nil {
@@ -80,6 +79,12 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
+func buildSlackPayload(text string) string {
+	payload := map[string]string{"text": text}
+	b, _ := json.Marshal(payload)
+	return string(b)
+}
+
 func formatMessage(data []byte) string {
 	var v any
 	if err := json.Unmarshal(data, &v); err != nil {
@@ -90,9 +95,4 @@ func formatMessage(data []byte) string {
 		return string(data)
 	}
 	return "```\n" + string(pretty) + "\n```"
-}
-
-func jsonString(s string) string {
-	b, _ := json.Marshal(s)
-	return string(b)
 }
