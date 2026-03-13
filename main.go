@@ -54,8 +54,7 @@ func main() {
 			return
 		}
 
-		text := formatMessage(data)
-		slackPayload := buildSlackPayload(text)
+		slackPayload := buildSlackPayload(data)
 
 		resp, err := http.Post(slackWebhookURL, "application/json", strings.NewReader(slackPayload))
 		if err != nil {
@@ -79,20 +78,40 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func buildSlackPayload(text string) string {
-	payload := map[string]string{"text": text}
+func buildSlackPayload(data []byte) string {
+	icons := []string{
+		":fitton-fire:",
+		":fitton:",
+		":fitton-smile:",
+		":fitton-niyari:",
+		":fitton-gahaha:",
+	}
+	randomIcon := icons[int(data[0])%len(icons)]
+
+	var parsed struct {
+		AccountID string `json:"account_id"`
+	}
+	json.Unmarshal(data, &parsed)
+
+	type field struct {
+		Title string `json:"title"`
+		Value string `json:"value"`
+		Short bool   `json:"short"`
+	}
+	type attachment struct {
+		Fields []field `json:"fields"`
+	}
+	payload := struct {
+		Text        string       `json:"text"`
+		Attachments []attachment `json:"attachments"`
+	}{
+		Text: "新しいアカウントができたみたいだよ！" + randomIcon,
+		Attachments: []attachment{
+			{Fields: []field{
+				{Title: "Account ID", Value: parsed.AccountID, Short: true},
+			}},
+		},
+	}
 	b, _ := json.Marshal(payload)
 	return string(b)
-}
-
-func formatMessage(data []byte) string {
-	var v any
-	if err := json.Unmarshal(data, &v); err != nil {
-		return string(data)
-	}
-	pretty, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return string(data)
-	}
-	return "```\n" + string(pretty) + "\n```"
 }
